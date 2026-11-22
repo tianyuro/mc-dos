@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>大肥鲸的专属永久网盘</title>
-    <!-- 引入 SHA256 加密库 -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <style>
         :root {
             --bg: #0d1117; --card: #161b22; --text: #c9d1d9;
@@ -62,10 +60,9 @@
 
     <script>
         // =========================================================
-        // 👇👇👇 这里是加密后的密码 (whale888 的 SHA256 值) 👇👇👇
-        // 别人看到这串乱码也猜不出你的原密码是什么
-        const AUTHOR_PASSWORD_HASH = "236b2801eb1a1e7f5821ef533a1a16e5b1fa941a5d5081a09383d39c7d22189a";
-        // 👆👆👆 如果以后想换密码，你可以去网上搜 "SHA256 在线加密"，把新密码转成哈希值替换到这里 👆👆👆
+        // 👇👇👇 这里是标准的真实 SHA-256 哈希 👇👇👇
+        // 密码依然是：whale888
+        const AUTHOR_PASSWORD_HASH = "236b2801eb1a1e7f5821ef533a1a16e5b1fa941a5d5081a09383d39c7d22189a"; 
         // =========================================================
 
         let isLogin = false;
@@ -76,11 +73,20 @@
             loadFilesFromGitHub();
         }
 
-        function login() {
+        // 用手机浏览器自带的加密引擎算 SHA-256
+        async function sha256(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            return hashHex;
+        }
+
+        async function login() {
             const pwd = prompt("请输入作者密码：");
             if (pwd !== null) {
-                // 把用户输入的密码也转换成 SHA256
-                const inputHash = CryptoJS.SHA256(pwd).toString();
+                // 等待算出结果
+                const inputHash = await sha256(pwd);
                 
                 if (inputHash === AUTHOR_PASSWORD_HASH) {
                     isLogin = true;
@@ -89,7 +95,7 @@
                     document.getElementById('loginBtn').style.background = "#238636";
                     document.getElementById('loginBtn').style.border = "none";
                 } else {
-                    alert("密码错误！");
+                    alert("密码错误！请确保没有多打空格。");
                 }
             }
         }
