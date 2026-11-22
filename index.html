@@ -29,7 +29,6 @@
 
         .login-form { background: var(--card); padding: 30px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; }
         .login-form h2 { margin-top: 0; color: var(--accent); }
-        /* 增加了一个 touch-action 样式，强制手机识别输入 */
         .login-form input { 
             width: 100%; padding: 15px; margin: 15px 0; border: 1px solid var(--border); border-radius: 8px; 
             box-sizing: border-box; font-size: 16px; text-align: center; touch-action: manipulation;
@@ -69,7 +68,8 @@
         <div id="page-login">
             <div class="login-form">
                 <h2>👑 作者验证</h2>
-                <input type="password" id="pwdInput" placeholder="请输入管理密码">
+                <!-- 这里去掉了提示密码 -->
+                <input type="password" id="pwdInput" placeholder="请输入作者专属密码">
                 <button onclick="doLogin()">进入控制台</button>
                 <button class="back" onclick="switchPage('page-guest')">返回下载列表</button>
             </div>
@@ -96,6 +96,7 @@
     </div>
 
     <script>
+        // 只有你（看代码的人）知道密码是 whale888
         const MASTER_PASSWORD = "whale888"; 
 
         function switchPage(pageId) {
@@ -104,11 +105,9 @@
             document.getElementById('page-admin').style.display = 'none';
             document.getElementById(pageId).style.display = 'block';
             
-            // 【补丁】如果切换到登录页，强制让密码框获得焦点，弹出键盘
             if (pageId === 'page-login') {
                 setTimeout(() => document.getElementById('pwdInput').focus(), 100);
             }
-            // 【补丁】如果切换到后台，强制让仓库输入框获得焦点
             if (pageId === 'page-admin') {
                 setTimeout(() => document.getElementById('repoInput').focus(), 100);
             }
