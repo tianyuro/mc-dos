@@ -3,214 +3,194 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>大肥鲸的专属永久网盘</title>
+    <title>大肥鲸网盘</title>
     <style>
         :root {
-            --bg: #0d1117; --card: #161b22; --text: #c9d1d9;
-            --accent: #58a6ff; --btn: #238636; --border: #30363d; --danger: #da3633;
+            --bg: #F0F4FA; --card: #FFFFFF; --text: #1C335C; --accent: #4566C1; --border: #E2E8F0;
         }
-        body { background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; padding: 20px; }
-        .container { max-width: 800px; margin: 0 auto; }
-        header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 20px; }
-        h1 { margin: 0; color: var(--accent); font-size: 24px; }
+        body { background-color: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; padding: 15px; margin: 0; }
+        .container { max-width: 600px; margin: 0 auto; }
         
-        .admin-panel { display: none; background: var(--card); border: 1px dashed var(--accent); border-radius: 8px; padding: 20px; margin-bottom: 20px; }
-        .admin-panel input[type="text"], .admin-panel input[type="password"] { width: 100%; padding: 10px; margin-bottom: 10px; background: #0d1117; border: 1px solid var(--border); color: white; border-radius: 6px; box-sizing: border-box; }
-        .admin-panel input[type="file"] { display: none; }
-        .upload-btn { display: inline-block; background: var(--btn); color: white; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; text-align: center; }
+        .header-card {
+            background: linear-gradient(135deg, #4566C1, #2d4a9c);
+            border-radius: 20px; padding: 25px 20px; color: white; text-align: center; margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(69, 102, 193, 0.2); position: relative;
+        }
+        .header-card h1 { margin: 0; font-size: 24px; font-weight: bold; }
         
+        .login-btn {
+            position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
+            background: rgba(255,255,255,0.2); color: white; border: 1px solid white;
+            padding: 6px 12px; border-radius: 20px; cursor: pointer; font-size: 12px;
+        }
+
+        #page-guest, #page-login, #page-admin { display: none; }
+        #page-guest { display: block; }
+
+        .login-form { background: var(--card); padding: 30px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; }
+        .login-form h2 { margin-top: 0; color: var(--accent); }
+        /* 增加了一个 touch-action 样式，强制手机识别输入 */
+        .login-form input { 
+            width: 100%; padding: 15px; margin: 15px 0; border: 1px solid var(--border); border-radius: 8px; 
+            box-sizing: border-box; font-size: 16px; text-align: center; touch-action: manipulation;
+        }
+        .login-form button { width: 100%; background: var(--accent); color: white; padding: 15px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .login-form .back { background: none; color: #888; font-weight: normal; font-size: 14px; margin-top: 10px; }
+
+        .admin-panel { background: var(--card); border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .admin-panel label { font-size: 13px; font-weight: bold; color: #555; }
+        .admin-panel input[type="text"], .admin-panel input[type="password"] { 
+            width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid var(--border); border-radius: 8px; 
+            box-sizing: border-box; touch-action: manipulation;
+        }
+        .upload-btn { display: block; background: #238636; color: white; text-align: center; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        input[type="file"] { display: none; }
+        .progress-text { color: #D49B38; font-size: 13px; margin-top: 10px; text-align: center;}
+
         .file-list { display: grid; gap: 15px; }
-        .file-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .file-card { background: var(--card); border-radius: 16px; padding: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         .file-info h3 { margin: 0 0 5px 0; font-size: 16px; word-break: break-all; }
-        .file-info p { margin: 0; font-size: 12px; color: #8b949e; }
-        .download-btn { background: var(--accent); color: #0d1117; padding: 8px 15px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 14px; }
-        .btn { background: #21262d; color: var(--text); border: 1px solid var(--border); padding: 8px 16px; border-radius: 6px; cursor: pointer; }
-        .progress { margin-top: 10px; font-size: 14px; color: #e3b341; }
+        .download-btn { background: #E8F0FE; color: var(--accent); padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 14px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>☁️ 大肥鲸永久网盘</h1>
-            <button class="btn" id="loginBtn" onclick="login()">🔑 作者登录</button>
-        </header>
-
-        <div class="admin-panel" id="adminPanel">
-            <h3>👑 欢迎回来，作者</h3>
-            
-            <label>你的仓库名 (例如: tianyuro/mc-dos)</label>
-            <input type="text" id="repoInput" placeholder="用户名/仓库名">
-
-            <label>你的 GitHub Token (ghp_...)</label>
-            <input type="password" id="tokenInput" placeholder="粘贴你的 Token，浏览器会记住它">
-            
-            <div style="margin-top: 15px; margin-bottom: 15px;">
-                <label for="fileInput" class="upload-btn" id="uploadLabel">📤 选择文件并上传至 GitHub</label>
-                <input type="file" id="fileInput" onchange="uploadToGitHub()">
+        
+        <!-- 1. 游客界面 -->
+        <div id="page-guest">
+            <div class="header-card">
+                <h1>☁️ 大肥鲸网盘</h1>
+                <button class="login-btn" onclick="switchPage('page-login')">作者登录</button>
             </div>
-            
-            <div class="progress" id="progressText"></div>
-            <button class="btn" style="background: var(--danger); border: none; margin-top: 15px;" onclick="logout()">退出登录</button>
+            <div class="file-list" id="guestFileList"></div>
         </div>
 
-        <div class="file-list" id="fileList">
-            <!-- 文件列表会渲染在这里 -->
+        <!-- 2. 登录界面 -->
+        <div id="page-login">
+            <div class="login-form">
+                <h2>👑 作者验证</h2>
+                <input type="password" id="pwdInput" placeholder="请输入管理密码 (whale888)">
+                <button onclick="doLogin()">进入控制台</button>
+                <button class="back" onclick="switchPage('page-guest')">返回下载列表</button>
+            </div>
         </div>
+
+        <!-- 3. 管理员界面 -->
+        <div id="page-admin">
+            <div class="header-card">
+                <h1>👑 管理后台</h1>
+                <button class="login-btn" onclick="logout()">退出登录</button>
+            </div>
+            <div class="admin-panel">
+                <label>仓库名 (如 tianyuro/mc-dos)</label>
+                <input type="text" id="repoInput" placeholder="用户名/仓库名">
+                <label>Token (ghp_...)</label>
+                <input type="password" id="tokenInput" placeholder="粘贴你的密钥">
+                <label for="fileInput" class="upload-btn">📤 选择文件上传</label>
+                <input type="file" id="fileInput" onchange="upload()">
+                <p class="progress-text" id="progress"></p>
+            </div>
+            <div class="file-list" id="adminFileList"></div>
+        </div>
+
     </div>
 
     <script>
-        // =========================================================
-        // 👇👇👇 咱们的专属密码字典 👇👇👇
-        // 暗号是：大肥鲸
-        const SECRET_DICTIONARY = {
-            "0x99, 0x88": "大肥鲸" 
-        };
-        // 👆👆👆 如果你以后想换暗号，改这里的 "大肥鲸" 就行 👆👆👆
-        // =========================================================
+        const MASTER_PASSWORD = "whale888"; 
 
-        let isLogin = false;
-
-        window.onload = function() {
-            document.getElementById('repoInput').value = localStorage.getItem('gh_repo') || '';
-            document.getElementById('tokenInput').value = localStorage.getItem('gh_token') || '';
-            loadFilesFromGitHub();
+        function switchPage(pageId) {
+            document.getElementById('page-guest').style.display = 'none';
+            document.getElementById('page-login').style.display = 'none';
+            document.getElementById('page-admin').style.display = 'none';
+            document.getElementById(pageId).style.display = 'block';
+            
+            // 【补丁】如果切换到登录页，强制让密码框获得焦点，弹出键盘
+            if (pageId === 'page-login') {
+                setTimeout(() => document.getElementById('pwdInput').focus(), 100);
+            }
+            // 【补丁】如果切换到后台，强制让仓库输入框获得焦点
+            if (pageId === 'page-admin') {
+                setTimeout(() => document.getElementById('repoInput').focus(), 100);
+            }
         }
 
-        function login() {
-            const pwd = prompt("请输入专属暗号：");
-            if (pwd !== null) {
-                const cleanPwd = pwd.trim(); // 去除空格
-                
-                // 遍历字典，比对暗号
-                let isValid = false;
-                for (let key in SECRET_DICTIONARY) {
-                    if (SECRET_DICTIONARY[key] === cleanPwd) {
-                        isValid = true;
-                        break;
-                    }
-                }
-
-                if (isValid) {
-                    isLogin = true;
-                    document.getElementById('adminPanel').style.display = 'block';
-                    document.getElementById('loginBtn').innerText = "👑 已登录";
-                    document.getElementById('loginBtn').style.background = "#238636";
-                    document.getElementById('loginBtn').style.border = "none";
-                } else {
-                    alert("暗号错误！请确认你输入的是：大肥鲸");
-                }
+        function doLogin() {
+            const pwd = document.getElementById('pwdInput').value.trim();
+            if (pwd === MASTER_PASSWORD) {
+                switchPage('page-admin');
+                loadFiles('adminFileList');
+            } else {
+                alert("密码错误！请仔细检查！");
             }
         }
 
         function logout() {
-            isLogin = false;
-            document.getElementById('adminPanel').style.display = 'none';
-            document.getElementById('loginBtn').innerText = "🔑 作者登录";
-            document.getElementById('loginBtn').style.background = "#21262d";
-            document.getElementById('loginBtn').style.border = "1px solid #30363d";
+            switchPage('page-guest');
+            loadFiles('guestFileList');
         }
 
-        // 核心：上传文件到 GitHub
-        function uploadToGitHub() {
+        function upload() {
             const file = document.getElementById('fileInput').files[0];
             const repo = document.getElementById('repoInput').value.trim();
             const token = document.getElementById('tokenInput').value.trim();
-
-            if (!file || !repo || !token) { alert("请填好仓库名、Token并选择文件！"); return; }
+            if (!file || !repo || !token) return alert("请填好仓库名和Token！");
 
             localStorage.setItem('gh_repo', repo);
             localStorage.setItem('gh_token', token);
 
-            const progress = document.getElementById('progressText');
-            progress.innerText = "⏳ 正在读取文件并上传，文件过大时请耐心等待...";
-            document.getElementById('uploadLabel').style.opacity = "0.5";
+            document.getElementById('progress').innerText = "⏳ 正在上传...";
 
             const reader = new FileReader();
             reader.onload = function(e) {
-                const base64Content = e.target.result.split(',')[1]; 
-                const timestamp = new Date().getTime();
-                const fileExt = file.name.includes('.') ? '.' + file.name.split('.').pop() : '';
-                const fileNameOnly = file.name.replace(fileExt, '');
-                const safeFileName = `${fileNameOnly}_${timestamp}${fileExt}`;
+                const base64 = e.target.result.split(',')[1];
+                const name = Date.now() + "_" + file.name;
+                const url = `https://api.github.com/repos/${repo}/contents/${name}`;
 
-                const url = `https://api.github.com/repos/${repo}/contents/${safeFileName}`;
-                
                 fetch(url, {
                     method: 'PUT',
-                    headers: {
-                        'Authorization': `token ${token}`,
-                        'Accept': 'application/vnd.github.v3+json',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        message: `Upload ${safeFileName} via Web Netdisk`,
-                        content: base64Content
-                    })
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.content && data.content.download_url) {
-                        progress.innerText = "✅ 上传成功！文件已永久保存在你的仓库。";
-                        document.getElementById('uploadLabel').style.opacity = "1";
-                        loadFilesFromGitHub();
+                    headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: 'upload', content: base64 })
+                }).then(res => res.json()).then(data => {
+                    if (data.content) {
+                        document.getElementById('progress').innerText = "✅ 上传成功！";
+                        loadFiles('adminFileList');
                     } else {
-                        progress.innerText = "❌ 上传失败：" + (data.message || "未知错误");
-                        document.getElementById('uploadLabel').style.opacity = "1";
+                        document.getElementById('progress').innerText = "❌ 失败：" + data.message;
                     }
-                })
-                .catch(err => { 
-                    progress.innerText = "❌ 请求失败: " + err; 
-                    document.getElementById('uploadLabel').style.opacity = "1";
+                }).catch(err => {
+                    document.getElementById('progress').innerText = "❌ 网络错误";
                 });
             };
             reader.readAsDataURL(file);
         }
 
-        // 核心：读取仓库里的文件列表
-        function loadFilesFromGitHub() {
-            const repo = document.getElementById('repoInput').value.trim();
-            if (!repo) return; 
-
-            const fileList = document.getElementById('fileList');
-            fileList.innerHTML = '<div style="color:#8b949e; font-size:14px;">正在加载文件列表...</div>';
-
-            const url = `https://api.github.com/repos/${repo}/contents/`;
-            const token = document.getElementById('tokenInput').value.trim();
-            const headers = token ? { 'Authorization': `token ${token}` } : {};
-
-            fetch(url, { headers })
+        function loadFiles(targetListId) {
+            const repo = document.getElementById('repoInput').value.trim() || localStorage.getItem('gh_repo');
+            if (!repo) return;
+            
+            fetch(`https://api.github.com/repos/${repo}/contents/`)
             .then(res => res.json())
             .then(files => {
-                if (Array.isArray(files)) {
-                    fileList.innerHTML = ''; 
-                    const validFiles = files.filter(file => file.type === 'file' && file.name !== 'index.html');
-                    
-                    if (validFiles.length === 0) {
-                        fileList.innerHTML = '<div style="color:#8b949e; font-size:14px;">暂无文件，请作者上传。</div>';
-                        return;
-                    }
-
-                    validFiles.forEach(file => {
-                        const directUrl = `https://cdn.jsdelivr.net/gh/${repo}@main/${file.name}`;
-                        const card = document.createElement('div');
-                        card.className = 'file-card';
-                        card.innerHTML = `
-                            <div class="file-info">
-                                <h3>📄 ${file.name}</h3>
-                                <p>大小: ${(file.size / 1024).toFixed(2)} KB</p>
-                            </div>
-                            <a href="${directUrl}" class="download-btn" target="_blank">下载</a>
-                        `;
-                        fileList.appendChild(card);
+                const list = document.getElementById(targetListId);
+                list.innerHTML = '';
+                if(Array.isArray(files)) {
+                    files.forEach(f => {
+                        if (f.type === 'file' && f.name !== 'index.html') {
+                            const card = document.createElement('div');
+                            card.className = 'file-card';
+                            card.innerHTML = `<div class="file-info"><h3>📄 ${f.name}</h3></div><a href="https://cdn.jsdelivr.net/gh/${repo}@main/${f.name}" class="download-btn" target="_blank">下载</a>`;
+                            list.appendChild(card);
+                        }
                     });
-                } else {
-                    fileList.innerHTML = '<div style="color:#da3633; font-size:14px;">获取列表失败，请检查仓库名是否正确。</div>';
                 }
-            })
-            .catch(err => {
-                fileList.innerHTML = '<div style="color:#da3633; font-size:14px;">网络请求错误，请检查网络连接。</div>';
             });
         }
+
+        window.onload = function() {
+            document.getElementById('repoInput').value = localStorage.getItem('gh_repo') || '';
+            document.getElementById('tokenInput').value = localStorage.getItem('gh_token') || '';
+            loadFiles('guestFileList');
+        };
     </script>
 </body>
 </html>
