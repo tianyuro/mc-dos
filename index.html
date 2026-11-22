@@ -60,9 +60,12 @@
 
     <script>
         // =========================================================
-        // 👇👇👇 这里是标准的真实 SHA-256 哈希 👇👇👇
-        // 密码依然是：whale888
-        const AUTHOR_PASSWORD_HASH = "236b2801eb1a1e7f5821ef533a1a16e5b1fa941a5d5081a09383d39c7d22189a"; 
+        // 👇👇👇 咱们的专属密码字典 👇👇👇
+        // 暗号是：大肥鲸
+        const SECRET_DICTIONARY = {
+            "0x99, 0x88": "大肥鲸" 
+        };
+        // 👆👆👆 如果你以后想换暗号，改这里的 "大肥鲸" 就行 👆👆👆
         // =========================================================
 
         let isLogin = false;
@@ -73,29 +76,28 @@
             loadFilesFromGitHub();
         }
 
-        // 用手机浏览器自带的加密引擎算 SHA-256
-        async function sha256(message) {
-            const msgBuffer = new TextEncoder().encode(message);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-            return hashHex;
-        }
-
-        async function login() {
-            const pwd = prompt("请输入作者密码：");
+        function login() {
+            const pwd = prompt("请输入专属暗号：");
             if (pwd !== null) {
-                // 等待算出结果
-                const inputHash = await sha256(pwd);
+                const cleanPwd = pwd.trim(); // 去除空格
                 
-                if (inputHash === AUTHOR_PASSWORD_HASH) {
+                // 遍历字典，比对暗号
+                let isValid = false;
+                for (let key in SECRET_DICTIONARY) {
+                    if (SECRET_DICTIONARY[key] === cleanPwd) {
+                        isValid = true;
+                        break;
+                    }
+                }
+
+                if (isValid) {
                     isLogin = true;
                     document.getElementById('adminPanel').style.display = 'block';
                     document.getElementById('loginBtn').innerText = "👑 已登录";
                     document.getElementById('loginBtn').style.background = "#238636";
                     document.getElementById('loginBtn').style.border = "none";
                 } else {
-                    alert("密码错误！请确保没有多打空格。");
+                    alert("暗号错误！请确认你输入的是：大肥鲸");
                 }
             }
         }
