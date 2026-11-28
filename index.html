@@ -2,242 +2,200 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>大肥鲸资源分享站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>大肥鲸全能整合包制作器</title>
     <style>
         :root {
-            --bg: #F0F4FA; --card: #FFFFFF; --text: #1C335C; --accent: #4566C1; --border: #E2E8F0;
+            --bg-color: #121318;
+            --card-bg: #1c1e26;
+            --text-main: #e2e2e2;
+            --text-sub: #888a99;
+            --accent: #e04f3f;
+            --border-color: #2d303e;
         }
-        body { background-color: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; padding: 15px; margin: 0; }
-        .container { max-width: 600px; margin: 0 auto; }
-        
-        .header-card {
-            background: linear-gradient(135deg, #4566C1, #2d4a9c);
-            border-radius: 20px; padding: 25px 20px; color: white; text-align: center; margin-bottom: 20px;
-            box-shadow: 0 4px 15px rgba(69, 102, 193, 0.2); position: relative;
-        }
-        .header-card h1 { margin: 0; font-size: 24px; font-weight: bold; }
-        
-        .login-btn {
-            position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
-            background: rgba(255,255,255,0.2); color: white; border: 1px solid white;
-            padding: 6px 12px; border-radius: 20px; cursor: pointer; font-size: 12px;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg-color); color: var(--text-main); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
 
-        #page-guest, #page-login, #page-admin { display: none; }
-        #page-guest { display: block; }
+        /* 顶部栏 */
+        .top-bar { padding: 15px 20px; font-size: 18px; font-weight: bold; border-bottom: 1px solid var(--border-color); }
+        
+        /* 内容区 */
+        .page-container { flex: 1; padding: 15px; overflow-y: auto; display: none; }
+        .page-container.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        .login-form { background: var(--card); padding: 30px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; }
-        .login-form h2 { margin-top: 0; color: var(--accent); }
-        .login-form input { width: 100%; padding: 15px; margin: 15px 0; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; font-size: 16px; text-align: center; }
-        .login-form button { width: 100%; background: var(--accent); color: white; padding: 15px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; }
-        .login-form .back { background: none; color: #888; font-weight: normal; font-size: 14px; margin-top: 10px; }
+        .card { background-color: var(--card-bg); border-radius: 12px; padding: 20px; margin-bottom: 15px; border: 1px solid var(--border-color); }
+        .card-title { font-size: 16px; font-weight: bold; margin-bottom: 15px; }
+        
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; font-size: 13px; color: var(--text-sub); margin-bottom: 8px; }
+        .form-control { width: 100%; padding: 12px; background-color: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; color: white; font-size: 14px; outline: none; }
+        
+        .btn { width: 100%; padding: 14px; border-radius: 8px; border: none; font-size: 15px; font-weight: bold; color: white; background-color: var(--accent); cursor: pointer; transition: 0.2s; margin-top: 10px; }
+        .btn:active { opacity: 0.8; transform: scale(0.98); }
+        .btn-secondary { background-color: #2d303e; }
+        
+        /* 底部导航 */
+        .bottom-nav { height: 60px; background-color: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; align-items: center; }
+        .nav-item { color: var(--text-sub); font-size: 13px; cursor: pointer; transition: 0.2s; padding: 10px; }
+        .nav-item.active { color: var(--accent); font-weight: bold; }
 
-        /* 作者面板 */
-        .admin-panel { background: var(--card); border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .admin-panel label { font-size: 13px; font-weight: bold; color: #555; }
-        .admin-panel input[type="text"] { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid var(--border); border-radius: 8px; box-sizing: border-box; }
-        .add-btn { display: block; background: #238636; color: white; text-align: center; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; border: none; width: 100%; font-size: 15px; }
-        .clear-btn { display: block; background: #e74c3c; color: white; text-align: center; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; border: none; width: 100%; font-size: 14px; margin-top: 10px; }
-
-        /* 列表卡片 */
-        .file-list { display: grid; gap: 15px; }
-        .file-card { background: var(--card); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: relative; }
-        
-        .file-info h3 { margin: 0 0 5px 0; font-size: 16px; word-break: break-all; }
-        .file-info p { margin: 0; font-size: 12px; color: #888; }
-        
-        .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
-        .btn { flex: 1; padding: 10px 15px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 13px; text-align: center; border: none; cursor: pointer; min-width: 80px; }
-        
-        .btn-fast { background: #E8F0FE; color: var(--accent); }
-        .btn-normal { background: #F3F4F6; color: #4B5563; }
-        .btn-copy { background: #fff; color: var(--accent); border: 1px solid var(--accent); }
-        
-        /* 删除按钮（仅作者可见） */
-        .delete-btn { position: absolute; top: 15px; right: 15px; background: #ffe3e3; color: #e74c3c; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-weight: bold; font-size: 16px; }
+        /* 进度条 */
+        .progress-bar { width: 100%; height: 6px; background-color: #2d303e; border-radius: 3px; margin-top: 10px; overflow: hidden; }
+        .progress-fill { height: 100%; background-color: var(--accent); width: 0%; transition: width 0.3s; }
     </style>
 </head>
 <body>
-    <div class="container">
+
+    <div class="top-bar">🐋 大肥鲸整合包制作器</div>
+
+    <!-- 页面 1：下载游戏 -->
+    <div id="page-download" class="page-container active">
+        <div class="card">
+            <div class="card-title">配置下载项</div>
+            <div class="input-group">
+                <label>选择游戏版本</label>
+                <select id="versionSelect" class="form-control">
+                    <option value="1.20.1">1.20.1 (最新推荐)</option>
+                    <option value="1.16.5">1.16.5 (模组神版)</option>
+                </select>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-title">下载进度</div>
+            <div style="font-size: 13px; color: var(--text-sub); margin-bottom: 10px;" id="statusText">准备就绪，等待开始...</div>
+            <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+            <button class="btn" onclick="startDownload()">开始下载</button>
+        </div>
+    </div>
+
+    <!-- 页面 2：前置库 -->
+    <div id="page-library" class="page-container">
+        <div class="card">
+            <div class="card-title">前置文件</div>
+            <div class="input-group">
+                <label>选择分类</label>
+                <select class="form-control" id="depCat">
+                    <option>⚙️ 模组加载器</option>
+                    <option>✨ 光影与优化</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>选择具体前置</label>
+                <select class="form-control" id="depName">
+                    <option>Fabric API (1.20.1)</option>
+                    <option>Sodium (钠优化)</option>
+                </select>
+            </div>
+            <button class="btn" onclick="downloadItem('前置')">一键下载</button>
+        </div>
+    </div>
+
+    <!-- 页面 3：Mod (带上传) -->
+    <div id="page-mods" class="page-container">
+        <div class="card">
+            <div class="card-title">在线 Mod 下载</div>
+            <div class="input-group">
+                <label>选择分类</label>
+                <select class="form-control" id="modCat">
+                    <option>🗺️ 辅助地图类</option>
+                    <option>🔧 实用工具类</option>
+                </select>
+            </div>
+            <button class="btn" onclick="downloadItem('Mod')">一键下载</button>
+        </div>
         
-        <!-- 游客界面 -->
-        <div id="page-guest">
-            <div class="header-card">
-                <h1>☁️ 大肥鲸资源站</h1>
-                <button class="login-btn" onclick="switchPage('page-login')">作者登录</button>
-            </div>
-            <div class="file-list" id="guestFileList"></div>
+        <div class="card">
+            <div class="card-title">玩家自定义导入</div>
+            <p style="font-size: 12px; color: var(--text-sub); margin-bottom: 10px;">选择你本地的 .jar 文件，它会被暂存到浏览器中。</p>
+            <!-- 核心：网页端选择文件 -->
+            <input type="file" id="localModUpload" accept=".jar" style="display: none;" onchange="handleFileUpload(event)">
+            <button class="btn btn-secondary" onclick="document.getElementById('localModUpload').click()">📂 从本地选择 .jar 导入</button>
+            <div id="uploadStatus" style="font-size: 12px; color: #66dd66; margin-top: 10px;"></div>
         </div>
+    </div>
 
-        <!-- 登录界面 -->
-        <div id="page-login">
-            <div class="login-form">
-                <h2>👑 作者验证</h2>
-                <input type="password" id="pwdInput" placeholder="请输入作者专属密码">
-                <button onclick="doLogin()">进入控制台</button>
-                <button class="back" onclick="switchPage('page-guest')">返回下载列表</button>
+    <!-- 页面 4：整合包打包 -->
+    <div id="page-manage" class="page-container">
+        <div class="card">
+            <div class="card-title">最终打包</div>
+            <div class="input-group">
+                <label>选择要打包的版本 (已下载)</label>
+                <select class="form-control">
+                    <option>1.20.1</option>
+                </select>
             </div>
+            <div class="input-group">
+                <label>已捕获的 Mod / 前置</label>
+                <div id="capturedList" style="font-size: 13px; color: #66dd66; line-height: 1.8;">暂无</div>
+            </div>
+            <button class="btn" onclick="alert('网页端打包功能需要配合后台服务器或在本地下载使用！')">📦 打包并融合</button>
         </div>
+    </div>
 
-        <!-- 管理员界面 -->
-        <div id="page-admin">
-            <div class="header-card">
-                <h1>👑 手工发布后台</h1>
-                <button class="login-btn" onclick="logout()">退出登录</button>
-            </div>
-            <div class="admin-panel">
-                <label>资源名称</label>
-                <input type="text" id="titleInput" placeholder="例如: MC 1.20.1 客户端">
-                
-                <label>文件大小/备注</label>
-                <input type="text" id="descInput" placeholder="例如: 25MB | 官方原版">
-                
-                <label>下载链接 (粘贴你的 Release 链接或加速链接)</label>
-                <input type="text" id="urlInput" placeholder="https://...">
-                
-                <button class="add-btn" onclick="addResource()">➕ 添加到网页</button>
-                <button class="clear-btn" onclick="clearAll()">清空所有数据</button>
-            </div>
-            <!-- 后台也展示一遍列表，方便删除 -->
-            <div class="file-list" id="adminFileList"></div>
-        </div>
-
+    <!-- 底部导航栏 -->
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="switchPage('download', this)">游戏</div>
+        <div class="nav-item" onclick="switchPage('library', this)">前置</div>
+        <div class="nav-item" onclick="switchPage('mods', this)">Mod</div>
+        <div class="nav-item" onclick="switchPage('manage', this)">整合包</div>
     </div>
 
     <script>
-        const MASTER_PASSWORD = "whale888"; 
-        
-        // 获取本地存储的资源列表
-        let resources = JSON.parse(localStorage.getItem('my_resources')) || [];
+        // 页面切换逻辑
+        function switchPage(pageId, element) {
+            document.querySelectorAll('.page-container').forEach(page => page.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            document.getElementById('page-' + pageId).classList.add('active');
+            element.classList.add('active');
+        }
 
-        function switchPage(pageId) {
-            document.getElementById('page-guest').style.display = 'none';
-            document.getElementById('page-login').style.display = 'none';
-            document.getElementById('page-admin').style.display = 'none';
-            document.getElementById(pageId).style.display = 'block';
+        // 模拟下载进度
+        function startDownload() {
+            const statusText = document.getElementById('statusText');
+            const progressFill = document.getElementById('progressFill');
+            let progress = 0;
             
-            if (pageId === 'page-login') setTimeout(() => document.getElementById('pwdInput').focus(), 100);
-            
-            // 刷新列表
-            renderList('guestFileList', false);
-            renderList('adminFileList', true);
+            statusText.innerText = "正在拉取依赖库...";
+            const interval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(interval);
+                    statusText.innerText = "下载完成！";
+                    alert("游戏核心下载完成！");
+                }
+                progressFill.style.width = progress + "%";
+            }, 200);
         }
 
-        function doLogin() {
-            const pwd = document.getElementById('pwdInput').value.trim();
-            if (pwd === MASTER_PASSWORD) {
-                switchPage('page-admin');
-            } else {
-                alert("密码错误！");
-            }
+        function downloadItem(type) {
+            alert(`开始从云端下载 ${type} 文件...\n(网页版模拟下载成功，实际需配合后端)`);
         }
 
-        function logout() {
-            switchPage('page-guest');
-        }
+        // ================= 核心：网页端处理本地文件上传 =================
+        let capturedFiles = []; // 模拟暂存区
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
 
-        // 添加资源
-        function addResource() {
-            const title = document.getElementById('titleInput').value.trim();
-            const desc = document.getElementById('descInput').value.trim();
-            const url = document.getElementById('urlInput').value.trim();
-
-            if (!title || !url) return alert("资源名称和下载链接不能为空！");
-
-            // 如果是普通的 GitHub 链接，自动帮你加上加速前缀
-            let fastUrl = url;
-            if (url.includes('github.com') && !url.includes('ghfast.top')) {
-                fastUrl = 'https://ghfast.top/' + url;
-            }
-
-            resources.unshift({ title, desc, url, fastUrl });
-            saveData();
-            
-            // 清空输入框
-            document.getElementById('titleInput').value = '';
-            document.getElementById('descInput').value = '';
-            document.getElementById('urlInput').value = '';
-
-            alert("✅ 添加成功！");
-            renderList('adminFileList', true);
-        }
-
-        // 删除资源
-        function deleteResource(index) {
-            if(confirm("确定要删除这个资源吗？")) {
-                resources.splice(index, 1);
-                saveData();
-                renderList('adminFileList', true);
-            }
-        }
-
-        // 清空所有
-        function clearAll() {
-            if(confirm("警告：确定要清空所有资源吗？这会导致下载列表变成空的！")) {
-                resources = [];
-                saveData();
-                renderList('adminFileList', true);
-            }
-        }
-
-        function saveData() {
-            localStorage.setItem('my_resources', JSON.stringify(resources));
-            renderList('guestFileList', false);
-        }
-
-        // 渲染列表
-        function renderList(targetListId, isAdmin) {
-            const list = document.getElementById(targetListId);
-            list.innerHTML = '';
-
-            if (resources.length === 0) {
-                list.innerHTML = '<div style="color:#888; font-size:14px; text-align:center; margin-top:20px;">暂无资源，等待作者发布。</div>';
+            if (!file.name.endsWith('.jar')) {
+                alert("请上传 .jar 格式的 Mod 文件！");
                 return;
             }
 
-            resources.forEach((item, index) => {
-                const card = document.createElement('div');
-                card.className = 'file-card';
-                
-                // 如果是管理员页面，多一个删除按钮
-                const deleteBtnHtml = isAdmin ? `<button class="delete-btn" onclick="deleteResource(${index})">✕</button>` : '';
-
-                card.innerHTML = `
-                    ${deleteBtnHtml}
-                    <div class="file-info">
-                        <h3>📄 ${item.title}</h3>
-                        <p>${item.desc || '无描述'}</p>
-                    </div>
-                    <div class="btn-group">
-                        <a href="${item.fastUrl}" class="btn btn-fast" download target="_blank">🚀 极速下载</a>
-                        <a href="${item.url}" class="btn btn-normal" download target="_blank">🌐 原版直链</a>
-                        <button class="btn btn-copy" onclick="copyLink('${item.fastUrl}')">📋 复制加速链</button>
-                    </div>
-                `;
-                list.appendChild(card);
-            });
+            // 网页无法直接读取本地路径，只能拿到文件对象和文件名
+            document.getElementById('uploadStatus').innerText = `✅ 成功捕获文件: ${file.name} (${(file.size/1024).toFixed(1)} KB)`;
+            capturedFiles.push(file.name);
+            
+            // 更新打包页的列表
+            const listEl = document.getElementById('capturedList');
+            if (capturedFiles.length > 0) {
+                listEl.innerHTML = capturedFiles.map(name => `✓ ${name}`).join('<br>');
+            }
+            
+            alert(`文件 ${file.name} 已加入整合包暂存区！\n请去【整合包】页签查看。`);
         }
-
-        // 复制链接
-        function copyLink(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                alert('✅ 加速直链已复制！');
-            }).catch(err => {
-                const textarea = document.createElement('textarea');
-                textarea.value = text;
-                document.body.appendChild(textarea);
-                textarea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textarea);
-                alert('✅ 加速直链已复制！');
-            });
-        }
-
-        // 页面加载
-        window.onload = function() {
-            renderList('guestFileList', false);
-        };
     </script>
 </body>
 </html>
