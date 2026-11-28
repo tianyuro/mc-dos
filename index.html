@@ -2,19 +2,21 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>大肥鲸云端制作器</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <style>
         :root { --bg-color: #121318; --card-bg: #1c1e26; --text-main: #e2e2e2; --text-sub: #888a99; --accent: #e04f3f; --border-color: #2d303e; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background-color: var(--bg-color); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; padding-bottom: env(safe-area-inset-bottom); overflow: hidden; }
+        
+        /* 核心修复：body 不溢出，用 flex 让中间滚动 */
+        body { background-color: var(--bg-color); color: var(--text-main); height: 100vh; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
         
         .top-bar { padding: 15px 20px; font-size: 18px; font-weight: bold; border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
         
-        /* 核心：多页面容器，默认隐藏 */
-        .page-container { flex: 1; padding: 15px; padding-bottom: 100px; overflow-y: auto; display: none; }
+        /* 中间内容区滚动，留出足够的底部空间防止被挡 */
+        .page-container { flex: 1; padding: 15px; padding-bottom: 80px; overflow-y: auto; display: none; -webkit-overflow-scrolling: touch; }
         .page-container.active { display: block; animation: fadeIn 0.2s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         
@@ -27,9 +29,23 @@
         .btn { width: 100%; padding: 14px; border-radius: 8px; border: none; font-size: 15px; font-weight: bold; color: white; background-color: var(--accent); cursor: pointer; margin-top: 10px; transition: 0.2s;}
         .btn:active { transform: scale(0.98); }
         
-        /* 底部导航栏 */
-        .bottom-nav { height: 65px; background-color: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; align-items: center; flex-shrink: 0; z-index: 10; }
-        .nav-item { color: var(--text-sub); font-size: 13px; cursor: pointer; padding: 10px; transition: 0.2s; }
+        /* 核心修复：导航栏绝对固定，加上底部安全距离，并且用 z-index 压制一切 */
+        .bottom-nav { 
+            position: fixed; 
+            bottom: 0; 
+            left: 0; 
+            right: 0; 
+            height: calc(60px + env(safe-area-inset-bottom)); 
+            padding-bottom: env(safe-area-inset-bottom);
+            background-color: var(--card-bg); 
+            border-top: 1px solid var(--border-color); 
+            display: flex; 
+            justify-content: space-around; 
+            align-items: center; 
+            z-index: 9999; /* 绝对置顶 */
+        }
+        
+        .nav-item { color: var(--text-sub); font-size: 14px; cursor: pointer; padding: 10px 20px; transition: 0.2s; user-select: none; }
         .nav-item.active { color: var(--accent); font-weight: bold; }
         
         .progress-bar { width: 100%; height: 6px; background-color: #2d303e; border-radius: 3px; margin-top: 10px; overflow: hidden; }
@@ -68,14 +84,7 @@
     <div id="page-library" class="page-container">
         <div class="card">
             <div class="card-title">前置文件下载</div>
-            <div class="input-group">
-                <label>选择前置分类</label>
-                <select class="form-control">
-                    <option>⚙️ 模组加载器</option>
-                    <option>✨ 光影与优化</option>
-                </select>
-            </div>
-            <button class="btn" onclick="alert('正在接入前置下载逻辑...')">一键下载</button>
+            <p style="color: #888a99; font-size: 13px;">暂未接入</p>
         </div>
     </div>
     
@@ -83,14 +92,7 @@
     <div id="page-mods" class="page-container">
         <div class="card">
             <div class="card-title">Mod 模组下载</div>
-            <div class="input-group">
-                <label>选择 Mod</label>
-                <select class="form-control">
-                    <option>Xaero's Minimap (小地图)</option>
-                    <option>AppleSkin (苹果皮)</option>
-                </select>
-            </div>
-            <button class="btn" onclick="alert('正在接入Mod下载逻辑...')">一键下载</button>
+            <p style="color: #888a99; font-size: 13px;">暂未接入</p>
         </div>
     </div>
 
@@ -98,11 +100,11 @@
     <div id="page-manage" class="page-container">
         <div class="card">
             <div class="card-title">整合包打包</div>
-            <p style="color: #888a99; font-size: 13px;">请先在【游戏】页下载版本，然后再来这里打包。</p>
+            <p style="color: #888a99; font-size: 13px;">暂未接入</p>
         </div>
     </div>
 
-    <!-- 底部导航栏 (已经加上 onclick 点击事件) -->
+    <!-- 底部导航栏 -->
     <div class="bottom-nav">
         <div class="nav-item active" onclick="switchPage('download', this)">游戏</div>
         <div class="nav-item" onclick="switchPage('library', this)">前置</div>
@@ -113,22 +115,19 @@
     <script>
         const OFFICIAL_MIRROR = "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json";
 
-        // ================= 核心：页面跳转逻辑 =================
+        // 核心修复：加上 console.log 看看是不是真的点击触发了
         function switchPage(pageId, element) {
-            // 1. 隐藏所有页面
+            console.log("点击了页面:", pageId);
             document.querySelectorAll('.page-container').forEach(page => {
                 page.classList.remove('active');
             });
-            // 2. 取消所有底部按钮的高亮
             document.querySelectorAll('.nav-item').forEach(nav => {
                 nav.classList.remove('active');
             });
-            // 3. 显示目标页面，并高亮当前按钮
             document.getElementById('page-' + pageId).classList.add('active');
             element.classList.add('active');
         }
 
-        // ================= 扫描版本 =================
         async function loadVersions() {
             const selectEl = document.getElementById('versionSelect');
             const statusEl = document.getElementById('fetchStatus');
@@ -168,7 +167,6 @@
 
         window.onload = loadVersions;
 
-        // ================= 打包并生成内存直链 =================
         async function generateBlobLink() {
             const version = document.getElementById('versionSelect').value;
             if(!version) return alert("请先选择版本！");
