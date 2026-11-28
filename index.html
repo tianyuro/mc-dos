@@ -9,10 +9,14 @@
     <style>
         :root { --bg-color: #121318; --card-bg: #1c1e26; --text-main: #e2e2e2; --text-sub: #888a99; --accent: #e04f3f; --border-color: #2d303e; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background-color: var(--bg-color); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; }
+        body { background-color: var(--bg-color); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; padding-bottom: env(safe-area-inset-bottom); overflow: hidden; }
         
         .top-bar { padding: 15px 20px; font-size: 18px; font-weight: bold; border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
-        .page-container { flex: 1; padding: 15px; overflow-y: auto; display: block; }
+        
+        /* 核心：多页面容器，默认隐藏 */
+        .page-container { flex: 1; padding: 15px; padding-bottom: 100px; overflow-y: auto; display: none; }
+        .page-container.active { display: block; animation: fadeIn 0.2s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         
         .card { background-color: var(--card-bg); border-radius: 12px; padding: 20px; margin-bottom: 15px; border: 1px solid var(--border-color); }
         .card-title { font-size: 16px; font-weight: bold; margin-bottom: 15px; }
@@ -21,22 +25,25 @@
         .form-control { width: 100%; padding: 12px; background-color: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; color: white; font-size: 14px; outline: none; }
         
         .btn { width: 100%; padding: 14px; border-radius: 8px; border: none; font-size: 15px; font-weight: bold; color: white; background-color: var(--accent); cursor: pointer; margin-top: 10px; transition: 0.2s;}
+        .btn:active { transform: scale(0.98); }
         
-        .bottom-nav { height: 65px; background-color: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; align-items: center; flex-shrink: 0; }
-        .nav-item { color: var(--text-sub); font-size: 13px; cursor: pointer; padding: 10px; }
+        /* 底部导航栏 */
+        .bottom-nav { height: 65px; background-color: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; align-items: center; flex-shrink: 0; z-index: 10; }
+        .nav-item { color: var(--text-sub); font-size: 13px; cursor: pointer; padding: 10px; transition: 0.2s; }
         .nav-item.active { color: var(--accent); font-weight: bold; }
         
         .progress-bar { width: 100%; height: 6px; background-color: #2d303e; border-radius: 3px; margin-top: 10px; overflow: hidden; }
         .progress-fill { height: 100%; background-color: var(--accent); width: 0%; transition: width 0.3s; }
         #fetchStatus { font-size: 12px; margin-top: 5px; display: block; }
-        .link-display { font-size: 13px; word-break: break-all; color: #58a6ff; margin-top: 15px; display: none; font-weight: bold; text-decoration: none; }
+        .link-display { font-size: 13px; word-break: break-all; color: #58a6ff; margin-top: 15px; display: none; font-weight: bold; text-decoration: underline; text-align: center; }
     </style>
 </head>
 <body>
 
     <div class="top-bar">🐋 大肥鲸云端制作器</div>
 
-    <div class="page-container">
+    <!-- 页面 1：游戏下载 -->
+    <div id="page-download" class="page-container active">
         <div class="card">
             <div class="card-title">配置下载项</div>
             <div class="input-group">
@@ -53,38 +60,86 @@
             <div style="font-size: 13px; color: var(--text-sub); margin-bottom: 10px;" id="statusText">准备就绪</div>
             <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
             <button class="btn" id="startBtn" onclick="generateBlobLink()">☁️ 内存打包并生成临时直链</button>
-            <a id="downloadLink" class="link-display" href="#" download>点击这里下载 ZIP (链接在内存中)</a>
+            <a id="downloadLink" class="link-display" href="#" download>点击这里下载 ZIP</a>
         </div>
     </div>
 
+    <!-- 页面 2：前置库 -->
+    <div id="page-library" class="page-container">
+        <div class="card">
+            <div class="card-title">前置文件下载</div>
+            <div class="input-group">
+                <label>选择前置分类</label>
+                <select class="form-control">
+                    <option>⚙️ 模组加载器</option>
+                    <option>✨ 光影与优化</option>
+                </select>
+            </div>
+            <button class="btn" onclick="alert('正在接入前置下载逻辑...')">一键下载</button>
+        </div>
+    </div>
+    
+    <!-- 页面 3：Mod 库 -->
+    <div id="page-mods" class="page-container">
+        <div class="card">
+            <div class="card-title">Mod 模组下载</div>
+            <div class="input-group">
+                <label>选择 Mod</label>
+                <select class="form-control">
+                    <option>Xaero's Minimap (小地图)</option>
+                    <option>AppleSkin (苹果皮)</option>
+                </select>
+            </div>
+            <button class="btn" onclick="alert('正在接入Mod下载逻辑...')">一键下载</button>
+        </div>
+    </div>
+
+    <!-- 页面 4：整合包 -->
+    <div id="page-manage" class="page-container">
+        <div class="card">
+            <div class="card-title">整合包打包</div>
+            <p style="color: #888a99; font-size: 13px;">请先在【游戏】页下载版本，然后再来这里打包。</p>
+        </div>
+    </div>
+
+    <!-- 底部导航栏 (已经加上 onclick 点击事件) -->
     <div class="bottom-nav">
-        <div class="nav-item active">游戏</div>
-        <div class="nav-item">前置</div>
-        <div class="nav-item">Mod</div>
-        <div class="nav-item">整合包</div>
+        <div class="nav-item active" onclick="switchPage('download', this)">游戏</div>
+        <div class="nav-item" onclick="switchPage('library', this)">前置</div>
+        <div class="nav-item" onclick="switchPage('mods', this)">Mod</div>
+        <div class="nav-item" onclick="switchPage('manage', this)">整合包</div>
     </div>
 
     <script>
-        // ==========================================
-        // 官方镜像库地址 (绝对支持跨域)
         const OFFICIAL_MIRROR = "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json";
-        // ==========================================
 
+        // ================= 核心：页面跳转逻辑 =================
+        function switchPage(pageId, element) {
+            // 1. 隐藏所有页面
+            document.querySelectorAll('.page-container').forEach(page => {
+                page.classList.remove('active');
+            });
+            // 2. 取消所有底部按钮的高亮
+            document.querySelectorAll('.nav-item').forEach(nav => {
+                nav.classList.remove('active');
+            });
+            // 3. 显示目标页面，并高亮当前按钮
+            document.getElementById('page-' + pageId).classList.add('active');
+            element.classList.add('active');
+        }
+
+        // ================= 扫描版本 =================
         async function loadVersions() {
             const selectEl = document.getElementById('versionSelect');
             const statusEl = document.getElementById('fetchStatus');
-            
             statusEl.innerText = "⏳ 正在直连 Mojang 官方镜像...";
 
             try {
                 const res = await fetch(OFFICIAL_MIRROR);
-                if (!res.ok) throw new Error("网络请求失败");
-                
                 const data = await res.json();
                 selectEl.innerHTML = ''; 
                 
                 const groups = { "✨ 正式版 (Release)": [], "🚀 快照版 (Snapshot)": [], "🏛️ 远古版": [] };
-                
                 data.versions.forEach(v => {
                     if (v.type === 'release') groups["✨ 正式版 (Release)"].push(v.id);
                     else if (v.type === 'snapshot') groups["🚀 快照版 (Snapshot)"].push(v.id);
@@ -103,20 +158,17 @@
                         selectEl.appendChild(optgroup);
                     }
                 }
-                
                 statusEl.innerText = `✅ 连接成功！已加载 ${data.versions.length} 个版本。`;
                 statusEl.style.color = "#66dd66";
-
             } catch (e) {
-                console.error(e);
-                statusEl.innerText = "❌ 获取失败，可能是你的网络无法直连 Mojang。";
+                statusEl.innerText = "❌ 获取失败，可能是网络问题。";
                 statusEl.style.color = "red";
             }
         }
 
         window.onload = loadVersions;
 
-        // 内存打包并生成临时 Blob 直链
+        // ================= 打包并生成内存直链 =================
         async function generateBlobLink() {
             const version = document.getElementById('versionSelect').value;
             if(!version) return alert("请先选择版本！");
@@ -130,50 +182,37 @@
             btn.innerText = "打包中...";
             dlLink.style.display = "none";
             progressFill.style.width = "20%";
-            statusText.innerText = "正在从官方库拉取 JSON 配置...";
+            statusText.innerText = "正在从官方库拉取配置...";
 
             try {
-                // 1. 先拿到当前版本的 detail url
                 const manifest = await (await fetch(OFFICIAL_MIRROR)).json();
                 const versionData = manifest.versions.find(v => v.id === version);
-                
-                // 2. 拉取详细 JSON
                 const vJson = await (await fetch(versionData.url)).json();
                 
                 progressFill.style.width = "50%";
                 statusText.innerText = "正在将文件写入本地内存...";
 
                 const zip = new JSZip();
-                
-                // 把核心 JSON 写进去
                 zip.file(`versions/${version}/${version}.json`, JSON.stringify(vJson, null, 2));
+                zip.file(`versions/${version}/${version}.jar`, "内存占位符");
                 
-                // 这里为了演示，只放一个占位符，真实下载太慢会卡死浏览器
-                zip.file(`versions/${version}/${version}.jar`, "这里是通过内存生成的 jar 占位符");
-                zip.file(`libraries/net/java/jna/jna-5.14.0.jar`, "这里是通过内存生成的库占位符");
-
                 progressFill.style.width = "80%";
                 statusText.innerText = "正在内存中压缩并生成链接...";
 
-                // 3. 生成 Blob 文件 (保存在内存中)
                 const content = await zip.generateAsync({ type: "blob" });
-                
-                // 4. 生成 Blob URL (这就是所谓的一次性临时直链)
                 const blobUrl = URL.createObjectURL(content);
                 
                 progressFill.style.width = "100%";
-                statusText.innerText = "✅ 生成成功！";
+                statusText.innerText = "✅ 生成成功！请点击下方链接下载";
                 btn.innerText = "重新生成";
                 btn.disabled = false;
 
-                // 5. 展示并绑定这个内存直链
                 dlLink.style.display = "block";
                 dlLink.href = blobUrl;
                 dlLink.download = `MC_${version}_Ready.zip`;
                 dlLink.innerText = `⬇️ 点击下载 MC_${version}.zip (内存直链)`;
 
             } catch (e) {
-                console.error(e);
                 statusText.innerText = "❌ 打包失败：" + e.message;
                 btn.innerText = "重试";
                 btn.disabled = false;
