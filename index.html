@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>大肥鲸云端制作器</title>
+    <title>大肥鲸整合包制作器</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <style>
@@ -47,7 +47,7 @@
 </head>
 <body>
 
-    <div class="top-bar">🐋 大肥鲸云端制作器</div>
+    <div class="top-bar">🐋 大肥鲸整合包制作器</div>
 
     <!-- 页面 1：游戏下载 -->
     <div id="page-download" class="page-container active">
@@ -66,7 +66,7 @@
             <div class="card-title">云端打包并生成直链</div>
             <div style="font-size: 13px; color: var(--text-sub); margin-bottom: 10px;" id="statusText">准备就绪</div>
             <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
-            <button class="btn" id="startBtn" onclick="generateBlobLink()">☁️ 内存打包并生成临时直链</button>
+            <button class="btn" id="startBtn" onclick="generateBlobLink()">☁️ 一键打包核心与Mod</button>
             <a id="downloadLink" class="link-display" href="#" download>点击这里下载 ZIP</a>
         </div>
     </div>
@@ -120,7 +120,6 @@
             <div class="file-list" id="queueList">
                 <div style="color: #888a99;">暂无文件，请去下载或上传</div>
             </div>
-            <button class="btn" style="margin-top: 20px;" onclick="alert('目前暂存区已在游戏页面打包时自动合并！')">📦 打包全部</button>
         </div>
     </div>
 
@@ -134,11 +133,7 @@
 
     <script>
         const OFFICIAL_MIRROR = "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json";
-        
-        // 核心暂存区：存放所有准备打包的额外文件
         let extraFilesQueue = []; 
-        // 本地文件暂存
-        let localFilesMap = {};
 
         function switchPage(pageId, element) {
             document.querySelectorAll('.page-container').forEach(page => page.classList.remove('active'));
@@ -147,7 +142,6 @@
             element.classList.add('active');
         }
 
-        // ================= 扫描游戏版本 =================
         async function loadVersions() {
             const selectEl = document.getElementById('versionSelect');
             const statusEl = document.getElementById('fetchStatus');
@@ -187,7 +181,6 @@
 
         window.onload = loadVersions;
 
-        // ================= 队列操作 =================
         function updateQueueUI() {
             const queueEl = document.getElementById('queueList');
             if(extraFilesQueue.length === 0) {
@@ -197,7 +190,6 @@
             queueEl.innerHTML = extraFilesQueue.map(file => `<div>✓ ${file.name}</div>`).join('');
         }
 
-        // ================= 前置/Mod 下载入队 =================
         async function downloadDependency() {
             const url = document.getElementById('depSelect').value;
             const name = document.getElementById('depSelect').options[document.getElementById('depSelect').selectedIndex].text;
@@ -209,7 +201,7 @@
                 const blob = await res.blob();
                 const filename = url.split('/').pop().split('%')[0];
                 
-                extraFilesQueue.push({ name: filename, blob: blob, isLocal: false });
+                extraFilesQueue.push({ name: filename, blob: blob });
                 status.innerText = `✅ ${name} 已加入打包队列！`;
                 updateQueueUI();
             } catch (e) {
@@ -228,7 +220,7 @@
                 const blob = await res.blob();
                 const filename = url.split('/').pop().split('%')[0];
                 
-                extraFilesQueue.push({ name: filename, blob: blob, isLocal: false });
+                extraFilesQueue.push({ name: filename, blob: blob });
                 status.innerText = `✅ ${name} 已加入打包队列！`;
                 updateQueueUI();
             } catch (e) {
@@ -236,18 +228,16 @@
             }
         }
 
-        // ================= 本地文件上传入队 =================
         function handleFileUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
             if (!file.name.endsWith('.jar')) return alert("请选择 .jar 文件！");
 
-            extraFilesQueue.push({ name: file.name, blob: file, isLocal: true });
+            extraFilesQueue.push({ name: file.name, blob: file });
             document.getElementById('uploadStatus').innerText = `✅ ${file.name} 已成功暂存！`;
             updateQueueUI();
         }
 
-        // ================= 一键打包 (包含所有暂存文件) =================
         async function generateBlobLink() {
             const version = document.getElementById('versionSelect').value;
             if(!version) return alert("请先选择游戏核心版本！");
@@ -269,15 +259,13 @@
                 const vJson = await (await fetch(versionData.url)).json();
                 
                 progressFill.style.width = "40%";
-                statusText.innerText = "2/3 正在将核心文件与附加文件写入内存...";
+                statusText.innerText = "2/3 正在将核心与Mod写入内存...";
 
                 const zip = new JSZip();
                 
-                // 放入核心配置
                 zip.file(`versions/${version}/${version}.json`, JSON.stringify(vJson, null, 2));
                 zip.file(`versions/${version}/${version}.jar`, "此处为jar占位符，真实文件过大");
                 
-                // 把队列里的 Mod 和前置全塞进 mods 文件夹
                 if (extraFilesQueue.length > 0) {
                     extraFilesQueue.forEach(item => {
                         zip.file(`mods/${item.name}`, item.blob);
