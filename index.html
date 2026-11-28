@@ -21,13 +21,15 @@
         
         .btn { width: 100%; padding: 14px; border-radius: 8px; border: none; font-size: 15px; font-weight: bold; color: white; background-color: var(--accent); cursor: pointer; margin-top: 10px; }
         
-        /* 底部导航栏：强制固定在底部并加高，防止被手机系统底栏遮挡 */
         .bottom-nav { height: 65px; background-color: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; align-items: center; flex-shrink: 0; padding-bottom: env(safe-area-inset-bottom); }
         .nav-item { color: var(--text-sub); font-size: 13px; cursor: pointer; padding: 10px; }
         .nav-item.active { color: var(--accent); font-weight: bold; }
         
         .progress-bar { width: 100%; height: 6px; background-color: #2d303e; border-radius: 3px; margin-top: 10px; overflow: hidden; }
         .progress-fill { height: 100%; background-color: var(--accent); width: 0%; transition: width 0.3s; }
+        
+        /* 状态提示文字 */
+        #fetchStatus { font-size: 12px; color: #66dd66; margin-top: 5px; display: block; }
     </style>
 </head>
 <body>
@@ -39,9 +41,12 @@
             <div class="card-title">配置下载项</div>
             <div class="input-group">
                 <label>选择游戏版本</label>
+                <!-- 下拉框 -->
                 <select id="versionSelect" class="form-control">
-                    <option value="">数据加载中，请稍候...</option>
+                    <option value="">连接服务器中...</option>
                 </select>
+                <!-- 扫描状态显示区 -->
+                <span id="fetchStatus">初始化...</span>
             </div>
         </div>
         <div class="card">
@@ -73,7 +78,6 @@
     </div>
 
     <script>
-        // 页面切换
         function switchPage(pageId, element) {
             document.querySelectorAll('.page-container').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -81,25 +85,33 @@
             element.classList.add('active');
         }
 
-        // 获取版本数据
+        // ================= 真实的版本扫描引擎 =================
         async function loadVersions() {
             const selectEl = document.getElementById('versionSelect');
+            const statusEl = document.getElementById('fetchStatus');
+            
+            statusEl.innerText = "⏳ 正在向 Mojang 官方发送请求...";
+            statusEl.style.color = "#e04f3f";
+
             try {
-                // 使用国内极速镜像
-                const res = await fetch('https://bmclapi2.bangbang93.com/mc/game/version_manifest.json');
+                // 核心：换用官方的 launchermeta，它允许跨域 (CORS)
+                const res = await fetch('https://launchermeta.mojang.com/mc/game/version_manifest.json');
+                
+                if (!res.ok) throw new Error("网络请求失败");
+                
                 const data = await res.json();
+                statusEl.innerText = `✅ 成功扫描到 ${data.versions.length} 个版本，正在分类...`;
+
+                selectEl.innerHTML = ''; // 清空
                 
-                selectEl.innerHTML = ''; // 清空提示
-                
-                const groups = { "✨ 正式版": [], "🚀 快照版": [], "🏛️ 远古版": [] };
+                const groups = { "✨ 正式版 (Release)": [], "🚀 快照版 (Snapshot)": [], "🏛️ 远古版 (Old/Beta)": [] };
                 
                 data.versions.forEach(v => {
-                    if (v.type === 'release') groups["✨ 正式版"].push(v.id);
-                    else if (v.type === 'snapshot') groups["🚀 快照版"].push(v.id);
-                    else groups["🏛️ 远古版"].push(v.id);
+                    if (v.type === 'release') groups["✨ 正式版 (Release)"].push(v.id);
+                    else if (v.type === 'snapshot') groups["🚀 快照版 (Snapshot)"].push(v.id);
+                    else groups["🏛️ 远古版 (Old/Beta)"].push(v.id);
                 });
 
-                // 插入分类
                 for (const [groupName, versions] of Object.entries(groups)) {
                     if (versions.length > 0) {
                         const optgroup = document.createElement('optgroup');
@@ -112,14 +124,22 @@
                         selectEl.appendChild(optgroup);
                     }
                 }
+                
+                // 扫描完成提示
+                statusEl.innerText = `✅ 扫描完成！共加载 ${data.versions.length} 个版本。`;
+                statusEl.style.color = "#66dd66";
+
             } catch (e) {
-                selectEl.innerHTML = '<option value="">网络超时，获取失败</option>';
+                console.error(e);
+                selectEl.innerHTML = '<option value="">获取失败</option>';
+                statusEl.innerText = "❌ 获取失败，请检查网络或被墙拦截。";
+                statusEl.style.color = "red";
             }
         }
 
+        // 页面加载完毕后执行
         window.onload = loadVersions;
 
-        // 模拟下载
         function startDownload() {
             const version = document.getElementById('versionSelect').value;
             if(!version) return alert("请先选择版本！");
