@@ -3,114 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>大肥鲸整合包制作器</title>
+    <title>大肥鲸制作器</title>
     <style>
-        :root {
-            --bg-color: #121318;
-            --card-bg: #1c1e26;
-            --text-main: #e2e2e2;
-            --text-sub: #888a99;
-            --accent: #e04f3f;
-            --border-color: #2d303e;
-        }
+        :root { --bg-color: #121318; --card-bg: #1c1e26; --text-main: #e2e2e2; --text-sub: #888a99; --accent: #e04f3f; --border-color: #2d303e; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { background-color: var(--bg-color); color: var(--text-main); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
-
-        .top-bar { padding: 15px 20px; font-size: 18px; font-weight: bold; border-bottom: 1px solid var(--border-color); }
+        body { background-color: var(--bg-color); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; }
         
+        .top-bar { padding: 15px 20px; font-size: 18px; font-weight: bold; border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
         .page-container { flex: 1; padding: 15px; overflow-y: auto; display: none; }
-        .page-container.active { display: block; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
+        .page-container.active { display: block; }
+        
         .card { background-color: var(--card-bg); border-radius: 12px; padding: 20px; margin-bottom: 15px; border: 1px solid var(--border-color); }
         .card-title { font-size: 16px; font-weight: bold; margin-bottom: 15px; }
-        
         .input-group { margin-bottom: 15px; }
         .input-group label { display: block; font-size: 13px; color: var(--text-sub); margin-bottom: 8px; }
         .form-control { width: 100%; padding: 12px; background-color: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; color: white; font-size: 14px; outline: none; }
         
-        .btn { width: 100%; padding: 14px; border-radius: 8px; border: none; font-size: 15px; font-weight: bold; color: white; background-color: var(--accent); cursor: pointer; transition: 0.2s; margin-top: 10px; }
-        .btn:active { opacity: 0.8; transform: scale(0.98); }
-        .btn-secondary { background-color: #2d303e; }
+        .btn { width: 100%; padding: 14px; border-radius: 8px; border: none; font-size: 15px; font-weight: bold; color: white; background-color: var(--accent); cursor: pointer; margin-top: 10px; }
         
-        .bottom-nav { height: 60px; background-color: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; align-items: center; }
-        .nav-item { color: var(--text-sub); font-size: 13px; cursor: pointer; transition: 0.2s; padding: 10px; }
+        /* 底部导航栏：强制固定在底部并加高，防止被手机系统底栏遮挡 */
+        .bottom-nav { height: 65px; background-color: var(--card-bg); border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; align-items: center; flex-shrink: 0; padding-bottom: env(safe-area-inset-bottom); }
+        .nav-item { color: var(--text-sub); font-size: 13px; cursor: pointer; padding: 10px; }
         .nav-item.active { color: var(--accent); font-weight: bold; }
-
+        
         .progress-bar { width: 100%; height: 6px; background-color: #2d303e; border-radius: 3px; margin-top: 10px; overflow: hidden; }
         .progress-fill { height: 100%; background-color: var(--accent); width: 0%; transition: width 0.3s; }
     </style>
 </head>
 <body>
 
-    <div class="top-bar">🐋 大肥鲸整合包制作器</div>
+    <div class="top-bar">🐋 大肥鲸制作器</div>
 
-    <!-- 页面 1：下载游戏 -->
     <div id="page-download" class="page-container active">
         <div class="card">
             <div class="card-title">配置下载项</div>
             <div class="input-group">
                 <label>选择游戏版本</label>
-                <!-- 这个下拉框现在会被 JS 自动塞入几百个版本 -->
                 <select id="versionSelect" class="form-control">
-                    <option value="">正在从云端获取版本列表...</option>
+                    <option value="">数据加载中，请稍候...</option>
                 </select>
             </div>
         </div>
         <div class="card">
             <div class="card-title">下载进度</div>
-            <div style="font-size: 13px; color: var(--text-sub); margin-bottom: 10px;" id="statusText">准备就绪，等待开始...</div>
+            <div style="font-size: 13px; color: var(--text-sub); margin-bottom: 10px;" id="statusText">准备就绪</div>
             <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
             <button class="btn" onclick="startDownload()">开始下载</button>
         </div>
     </div>
 
-    <!-- 页面 2：前置库 -->
     <div id="page-library" class="page-container">
-        <div class="card">
-            <div class="card-title">前置文件</div>
-            <div class="input-group">
-                <label>选择具体前置</label>
-                <select class="form-control">
-                    <option>Fabric API (1.20.1)</option>
-                    <option>Sodium (钠优化)</option>
-                </select>
-            </div>
-            <button class="btn" onclick="alert('模拟下载中...')">一键下载</button>
-        </div>
+        <div class="card"><div class="card-title">前置库</div><p>暂未开放</p></div>
     </div>
-
-    <!-- 页面 3：Mod -->
+    
     <div id="page-mods" class="page-container">
-        <div class="card">
-            <div class="card-title">在线 Mod 下载</div>
-            <div class="input-group">
-                <label>选择 Mod</label>
-                <select class="form-control">
-                    <option>Xaero's Minimap (小地图)</option>
-                    <option>AppleSkin (苹果皮)</option>
-                </select>
-            </div>
-            <button class="btn" onclick="alert('模拟下载中...')">一键下载</button>
-        </div>
-        
-        <div class="card">
-            <div class="card-title">玩家自定义导入</div>
-            <input type="file" id="localModUpload" accept=".jar" style="display: none;" onchange="handleFileUpload(event)">
-            <button class="btn btn-secondary" onclick="document.getElementById('localModUpload').click()">📂 从本地选择 .jar 导入</button>
-            <div id="uploadStatus" style="font-size: 12px; color: #66dd66; margin-top: 10px;"></div>
-        </div>
+        <div class="card"><div class="card-title">Mod库</div><p>暂未开放</p></div>
     </div>
 
-    <!-- 页面 4：整合包 -->
     <div id="page-manage" class="page-container">
-        <div class="card">
-            <div class="card-title">最终打包</div>
-            <button class="btn" onclick="alert('网页端需要 JSZip 库进行打包，目前仅作演示！')">📦 打包并融合</button>
-        </div>
+        <div class="card"><div class="card-title">整合包打包</div><p>暂未开放</p></div>
     </div>
 
-    <!-- 底部导航栏 -->
+    <!-- 底部导航 -->
     <div class="bottom-nav">
         <div class="nav-item active" onclick="switchPage('download', this)">游戏</div>
         <div class="nav-item" onclick="switchPage('library', this)">前置</div>
@@ -119,96 +73,65 @@
     </div>
 
     <script>
-        // 页面切换逻辑
+        // 页面切换
         function switchPage(pageId, element) {
-            document.querySelectorAll('.page-container').forEach(page => page.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            document.querySelectorAll('.page-container').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.getElementById('page-' + pageId).classList.add('active');
             element.classList.add('active');
         }
 
-        // ================= 核心：动态获取所有 MC 版本 =================
+        // 获取版本数据
         async function loadVersions() {
             const selectEl = document.getElementById('versionSelect');
             try {
-                // 使用 BMCLAPI 的国内镜像接口获取版本清单
-                const response = await fetch('https://bmclapi2.bangbang93.com/mc/game/version_manifest.json');
-                const data = await response.json();
+                // 使用国内极速镜像
+                const res = await fetch('https://bmclapi2.bangbang93.com/mc/game/version_manifest.json');
+                const data = await res.json();
                 
-                selectEl.innerHTML = ''; // 清空加载提示
+                selectEl.innerHTML = ''; // 清空提示
                 
-                // 分类容器
-                const groups = {
-                    "✨ 正式版 (Release)": [],
-                    "🚀 快照版 (Snapshot)": [],
-                    "🏛️ 远古版 (Old/Beta)": []
-                };
-
-                // 遍历分配
+                const groups = { "✨ 正式版": [], "🚀 快照版": [], "🏛️ 远古版": [] };
+                
                 data.versions.forEach(v => {
-                    if (v.type === 'release') groups["✨ 正式版 (Release)"].push(v.id);
-                    else if (v.type === 'snapshot') groups["🚀 快照版 (Snapshot)"].push(v.id);
-                    else groups["🏛️ 远古版 (Old/Beta)"].push(v.id);
+                    if (v.type === 'release') groups["✨ 正式版"].push(v.id);
+                    else if (v.type === 'snapshot') groups["🚀 快照版"].push(v.id);
+                    else groups["🏛️ 远古版"].push(v.id);
                 });
 
-                // 动态生成 <optgroup> 标签
+                // 插入分类
                 for (const [groupName, versions] of Object.entries(groups)) {
                     if (versions.length > 0) {
                         const optgroup = document.createElement('optgroup');
                         optgroup.label = groupName;
                         versions.forEach(v => {
-                            const option = document.createElement('option');
-                            option.value = v;
-                            option.text = v;
-                            optgroup.appendChild(option);
+                            const opt = document.createElement('option');
+                            opt.value = v; opt.text = v;
+                            optgroup.appendChild(opt);
                         });
                         selectEl.appendChild(optgroup);
                     }
                 }
-            } catch (error) {
-                selectEl.innerHTML = '<option value="">获取失败，请检查网络</option>';
-                console.error("获取版本失败:", error);
+            } catch (e) {
+                selectEl.innerHTML = '<option value="">网络超时，获取失败</option>';
             }
         }
 
-        // 页面加载完毕后自动请求版本数据
-        window.onload = () => {
-            loadVersions();
-        };
+        window.onload = loadVersions;
 
-        // 模拟下载进度
+        // 模拟下载
         function startDownload() {
             const version = document.getElementById('versionSelect').value;
             if(!version) return alert("请先选择版本！");
-
             const statusText = document.getElementById('statusText');
             const progressFill = document.getElementById('progressFill');
-            let progress = 0;
-            
-            statusText.innerText = `正在拉取 ${version} 依赖库...`;
-            const interval = setInterval(() => {
-                progress += Math.random() * 15;
-                if (progress >= 100) {
-                    progress = 100;
-                    clearInterval(interval);
-                    statusText.innerText = "下载完成！";
-                    alert(`${version} 游戏核心下载完成！`);
-                }
-                progressFill.style.width = progress + "%";
+            let p = 0;
+            statusText.innerText = `正在下载 ${version}...`;
+            const int = setInterval(() => {
+                p += 15;
+                if(p >= 100) { p = 100; clearInterval(int); statusText.innerText = "下载完成"; }
+                progressFill.style.width = p + "%";
             }, 200);
-        }
-
-        // 本地文件上传
-        let capturedFiles = [];
-        function handleFileUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            if (!file.name.endsWith('.jar')) return alert("请上传 .jar 格式！");
-
-            document.getElementById('uploadStatus').innerText = `✅ 成功捕获文件: ${file.name} (${(file.size/1024).toFixed(1)} KB)`;
-            capturedFiles.push(file.name);
-            alert(`文件 ${file.name} 已加入暂存区！`);
         }
     </script>
 </body>
