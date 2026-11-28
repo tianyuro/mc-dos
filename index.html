@@ -9,13 +9,10 @@
     <style>
         :root { --bg-color: #121318; --card-bg: #1c1e26; --text-main: #e2e2e2; --text-sub: #888a99; --accent: #e04f3f; --border-color: #2d303e; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
-        
-        /* 核心修复：body 不溢出，用 flex 让中间滚动 */
         body { background-color: var(--bg-color); color: var(--text-main); height: 100vh; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
         
         .top-bar { padding: 15px 20px; font-size: 18px; font-weight: bold; border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
         
-        /* 中间内容区滚动，留出足够的底部空间防止被挡 */
         .page-container { flex: 1; padding: 15px; padding-bottom: 80px; overflow-y: auto; display: none; -webkit-overflow-scrolling: touch; }
         .page-container.active { display: block; animation: fadeIn 0.2s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -28,30 +25,24 @@
         
         .btn { width: 100%; padding: 14px; border-radius: 8px; border: none; font-size: 15px; font-weight: bold; color: white; background-color: var(--accent); cursor: pointer; margin-top: 10px; transition: 0.2s;}
         .btn:active { transform: scale(0.98); }
+        .btn-secondary { background-color: #2d303e; }
         
-        /* 核心修复：导航栏绝对固定，加上底部安全距离，并且用 z-index 压制一切 */
         .bottom-nav { 
-            position: fixed; 
-            bottom: 0; 
-            left: 0; 
-            right: 0; 
-            height: calc(60px + env(safe-area-inset-bottom)); 
-            padding-bottom: env(safe-area-inset-bottom);
-            background-color: var(--card-bg); 
-            border-top: 1px solid var(--border-color); 
-            display: flex; 
-            justify-content: space-around; 
-            align-items: center; 
-            z-index: 9999; /* 绝对置顶 */
+            position: fixed; bottom: 0; left: 0; right: 0; 
+            height: calc(60px + env(safe-area-inset-bottom)); padding-bottom: env(safe-area-inset-bottom);
+            background-color: var(--card-bg); border-top: 1px solid var(--border-color); 
+            display: flex; justify-content: space-around; align-items: center; z-index: 9999; 
         }
-        
         .nav-item { color: var(--text-sub); font-size: 14px; cursor: pointer; padding: 10px 20px; transition: 0.2s; user-select: none; }
         .nav-item.active { color: var(--accent); font-weight: bold; }
         
         .progress-bar { width: 100%; height: 6px; background-color: #2d303e; border-radius: 3px; margin-top: 10px; overflow: hidden; }
         .progress-fill { height: 100%; background-color: var(--accent); width: 0%; transition: width 0.3s; }
-        #fetchStatus { font-size: 12px; margin-top: 5px; display: block; }
+        #fetchStatus, #modStatus { font-size: 12px; margin-top: 5px; display: block; }
         .link-display { font-size: 13px; word-break: break-all; color: #58a6ff; margin-top: 15px; display: none; font-weight: bold; text-decoration: underline; text-align: center; }
+        
+        .file-list { max-height: 150px; overflow-y: auto; background: #121318; padding: 10px; border-radius: 8px; font-size: 12px; color: #66dd66; }
+        .file-list div { padding: 4px 0; border-bottom: 1px solid #2d303e; }
     </style>
 </head>
 <body>
@@ -61,7 +52,7 @@
     <!-- 页面 1：游戏下载 -->
     <div id="page-download" class="page-container active">
         <div class="card">
-            <div class="card-title">配置下载项</div>
+            <div class="card-title">配置游戏核心</div>
             <div class="input-group">
                 <label>选择游戏版本</label>
                 <select id="versionSelect" class="form-control">
@@ -84,23 +75,52 @@
     <div id="page-library" class="page-container">
         <div class="card">
             <div class="card-title">前置文件下载</div>
-            <p style="color: #888a99; font-size: 13px;">暂未接入</p>
+            <div class="input-group">
+                <label>选择前置文件</label>
+                <select id="depSelect" class="form-control">
+                    <option value="https://cdn.modrinth.com/data/P7dR8mSH/versions/r7bcp0zC/fabric-api-0.92.2%2B1.20.1.jar">Fabric API (1.20.1)</option>
+                    <option value="https://cdn.modrinth.com/data/AANobbMI/versions/mc1.20.1-0.5.8/sodium-fabric-mc1.20.1-0.5.8%2Bbuild.23.jar">Sodium (钠优化 1.20.1)</option>
+                    <option value="https://cdn.modrinth.com/data/GchcoTOW/versions/2.0.1/oculus-mc1.20.1-1.6.9.jar">Oculus (光影前置 1.20.1)</option>
+                </select>
+            </div>
+            <button class="btn" onclick="downloadDependency()">⬇️ 添加到打包队列</button>
+            <div id="depStatus" style="font-size:12px; color:#66dd66; margin-top:10px;"></div>
         </div>
     </div>
     
     <!-- 页面 3：Mod 库 -->
     <div id="page-mods" class="page-container">
         <div class="card">
-            <div class="card-title">Mod 模组下载</div>
-            <p style="color: #888a99; font-size: 13px;">暂未接入</p>
+            <div class="card-title">在线 Mod 下载</div>
+            <div class="input-group">
+                <label>选择 Mod</label>
+                <select id="modSelect" class="form-control">
+                    <option value="https://cdn.modrinth.com/data/1bokaNcj/versions/23.9.7/xaeros_minimap_23.9.7_Fabric_1.20.1.jar">Xaero's Minimap (小地图)</option>
+                    <option value="https://cdn.modrinth.com/data/EsAfCjCV/versions/2.5.1/appleskin-fabric-mc1.20-2.5.1.jar">AppleSkin (苹果皮)</option>
+                </select>
+            </div>
+            <button class="btn" onclick="downloadMod()">⬇️ 添加到打包队列</button>
+            <div id="modStatus" style="font-size:12px; color:#66dd66; margin-top:10px;"></div>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">玩家自定义上传</div>
+            <p style="font-size: 12px; color: var(--text-sub); margin-bottom: 10px;">选择你手机里的 .jar 文件</p>
+            <input type="file" id="localModUpload" accept=".jar" style="display: none;" onchange="handleFileUpload(event)">
+            <button class="btn btn-secondary" onclick="document.getElementById('localModUpload').click()">📂 从本地导入 .jar</button>
+            <div id="uploadStatus" style="font-size:12px; color:#66dd66; margin-top:10px;"></div>
         </div>
     </div>
 
     <!-- 页面 4：整合包 -->
     <div id="page-manage" class="page-container">
         <div class="card">
-            <div class="card-title">整合包打包</div>
-            <p style="color: #888a99; font-size: 13px;">暂未接入</p>
+            <div class="card-title">打包暂存区</div>
+            <p style="font-size: 12px; color: var(--text-sub); margin-bottom: 10px;">以下文件将在最终打包时自动融合进 ZIP：</p>
+            <div class="file-list" id="queueList">
+                <div style="color: #888a99;">暂无文件，请去下载或上传</div>
+            </div>
+            <button class="btn" style="margin-top: 20px;" onclick="alert('目前暂存区已在游戏页面打包时自动合并！')">📦 打包全部</button>
         </div>
     </div>
 
@@ -114,34 +134,34 @@
 
     <script>
         const OFFICIAL_MIRROR = "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json";
+        
+        // 核心暂存区：存放所有准备打包的额外文件
+        let extraFilesQueue = []; 
+        // 本地文件暂存
+        let localFilesMap = {};
 
-        // 核心修复：加上 console.log 看看是不是真的点击触发了
         function switchPage(pageId, element) {
-            console.log("点击了页面:", pageId);
-            document.querySelectorAll('.page-container').forEach(page => {
-                page.classList.remove('active');
-            });
-            document.querySelectorAll('.nav-item').forEach(nav => {
-                nav.classList.remove('active');
-            });
+            document.querySelectorAll('.page-container').forEach(page => page.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
             document.getElementById('page-' + pageId).classList.add('active');
             element.classList.add('active');
         }
 
+        // ================= 扫描游戏版本 =================
         async function loadVersions() {
             const selectEl = document.getElementById('versionSelect');
             const statusEl = document.getElementById('fetchStatus');
-            statusEl.innerText = "⏳ 正在直连 Mojang 官方镜像...";
+            statusEl.innerText = "⏳ 正在直连官方库...";
 
             try {
                 const res = await fetch(OFFICIAL_MIRROR);
                 const data = await res.json();
                 selectEl.innerHTML = ''; 
                 
-                const groups = { "✨ 正式版 (Release)": [], "🚀 快照版 (Snapshot)": [], "🏛️ 远古版": [] };
+                const groups = { "✨ 正式版": [], "🚀 快照版": [], "🏛️ 远古版": [] };
                 data.versions.forEach(v => {
-                    if (v.type === 'release') groups["✨ 正式版 (Release)"].push(v.id);
-                    else if (v.type === 'snapshot') groups["🚀 快照版 (Snapshot)"].push(v.id);
+                    if (v.type === 'release') groups["✨ 正式版"].push(v.id);
+                    else if (v.type === 'snapshot') groups["🚀 快照版"].push(v.id);
                     else groups["🏛️ 远古版"].push(v.id);
                 });
 
@@ -157,19 +177,80 @@
                         selectEl.appendChild(optgroup);
                     }
                 }
-                statusEl.innerText = `✅ 连接成功！已加载 ${data.versions.length} 个版本。`;
+                statusEl.innerText = `✅ 加载成功！共 ${data.versions.length} 个版本。`;
                 statusEl.style.color = "#66dd66";
             } catch (e) {
-                statusEl.innerText = "❌ 获取失败，可能是网络问题。";
+                statusEl.innerText = "❌ 网络请求失败。";
                 statusEl.style.color = "red";
             }
         }
 
         window.onload = loadVersions;
 
+        // ================= 队列操作 =================
+        function updateQueueUI() {
+            const queueEl = document.getElementById('queueList');
+            if(extraFilesQueue.length === 0) {
+                queueEl.innerHTML = '<div style="color: #888a99;">暂无文件</div>';
+                return;
+            }
+            queueEl.innerHTML = extraFilesQueue.map(file => `<div>✓ ${file.name}</div>`).join('');
+        }
+
+        // ================= 前置/Mod 下载入队 =================
+        async function downloadDependency() {
+            const url = document.getElementById('depSelect').value;
+            const name = document.getElementById('depSelect').options[document.getElementById('depSelect').selectedIndex].text;
+            const status = document.getElementById('depStatus');
+            
+            status.innerText = `⏳ 正在拉取 ${name}...`;
+            try {
+                const res = await fetch(url);
+                const blob = await res.blob();
+                const filename = url.split('/').pop().split('%')[0];
+                
+                extraFilesQueue.push({ name: filename, blob: blob, isLocal: false });
+                status.innerText = `✅ ${name} 已加入打包队列！`;
+                updateQueueUI();
+            } catch (e) {
+                status.innerText = `❌ 下载失败，请稍后重试`;
+            }
+        }
+
+        async function downloadMod() {
+            const url = document.getElementById('modSelect').value;
+            const name = document.getElementById('modSelect').options[document.getElementById('modSelect').selectedIndex].text;
+            const status = document.getElementById('modStatus');
+            
+            status.innerText = `⏳ 正在拉取 ${name}...`;
+            try {
+                const res = await fetch(url);
+                const blob = await res.blob();
+                const filename = url.split('/').pop().split('%')[0];
+                
+                extraFilesQueue.push({ name: filename, blob: blob, isLocal: false });
+                status.innerText = `✅ ${name} 已加入打包队列！`;
+                updateQueueUI();
+            } catch (e) {
+                status.innerText = `❌ 下载失败，请稍后重试`;
+            }
+        }
+
+        // ================= 本地文件上传入队 =================
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (!file.name.endsWith('.jar')) return alert("请选择 .jar 文件！");
+
+            extraFilesQueue.push({ name: file.name, blob: file, isLocal: true });
+            document.getElementById('uploadStatus').innerText = `✅ ${file.name} 已成功暂存！`;
+            updateQueueUI();
+        }
+
+        // ================= 一键打包 (包含所有暂存文件) =================
         async function generateBlobLink() {
             const version = document.getElementById('versionSelect').value;
-            if(!version) return alert("请先选择版本！");
+            if(!version) return alert("请先选择游戏核心版本！");
             
             const btn = document.getElementById('startBtn');
             const statusText = document.getElementById('statusText');
@@ -180,35 +261,44 @@
             btn.innerText = "打包中...";
             dlLink.style.display = "none";
             progressFill.style.width = "20%";
-            statusText.innerText = "正在从官方库拉取配置...";
+            statusText.innerText = "1/3 正在拉取游戏配置...";
 
             try {
                 const manifest = await (await fetch(OFFICIAL_MIRROR)).json();
                 const versionData = manifest.versions.find(v => v.id === version);
                 const vJson = await (await fetch(versionData.url)).json();
                 
-                progressFill.style.width = "50%";
-                statusText.innerText = "正在将文件写入本地内存...";
+                progressFill.style.width = "40%";
+                statusText.innerText = "2/3 正在将核心文件与附加文件写入内存...";
 
                 const zip = new JSZip();
-                zip.file(`versions/${version}/${version}.json`, JSON.stringify(vJson, null, 2));
-                zip.file(`versions/${version}/${version}.jar`, "内存占位符");
                 
+                // 放入核心配置
+                zip.file(`versions/${version}/${version}.json`, JSON.stringify(vJson, null, 2));
+                zip.file(`versions/${version}/${version}.jar`, "此处为jar占位符，真实文件过大");
+                
+                // 把队列里的 Mod 和前置全塞进 mods 文件夹
+                if (extraFilesQueue.length > 0) {
+                    extraFilesQueue.forEach(item => {
+                        zip.file(`mods/${item.name}`, item.blob);
+                    });
+                }
+
                 progressFill.style.width = "80%";
-                statusText.innerText = "正在内存中压缩并生成链接...";
+                statusText.innerText = "3/3 正在内存压缩并生成直链...";
 
                 const content = await zip.generateAsync({ type: "blob" });
                 const blobUrl = URL.createObjectURL(content);
                 
                 progressFill.style.width = "100%";
-                statusText.innerText = "✅ 生成成功！请点击下方链接下载";
-                btn.innerText = "重新生成";
+                statusText.innerText = `✅ 打包成功！(共合并 ${extraFilesQueue.length} 个 Mod/前置)`;
+                btn.innerText = "重新打包";
                 btn.disabled = false;
 
                 dlLink.style.display = "block";
                 dlLink.href = blobUrl;
-                dlLink.download = `MC_${version}_Ready.zip`;
-                dlLink.innerText = `⬇️ 点击下载 MC_${version}.zip (内存直链)`;
+                dlLink.download = `MC_${version}_Custom.zip`;
+                dlLink.innerText = `⬇️ 点击下载 MC_${version}_Custom.zip`;
 
             } catch (e) {
                 statusText.innerText = "❌ 打包失败：" + e.message;
